@@ -1,0 +1,118 @@
+import csv
+from datetime import datetime
+
+class StudyPlanner:
+    def __init__(self):
+        self.subjects = {}
+
+    def add_subject(self, subject_name):
+        if subject_name in self.subjects:
+            print(f"Subject {subject_name} already exists!")
+        else:
+            self.subjects[subject_name] = []
+            print(f"Subject {subject_name} added.")
+
+    def add_task(self, subject_name, task_name, due_date):
+        if subject_name not in self.subjects:
+            print(f"Subject {subject_name} does not exist. Add the subject first.")
+        else:
+            try:
+                due_date = datetime.strptime(due_date, "%Y-%m-%d")
+                self.subjects[subject_name].append({"task": task_name, "due_date": due_date, "completed": False})
+                print(f"Task '{task_name}' added to subject '{subject_name}' with due date {due_date.strftime('%Y-%m-%d')}.")
+            except ValueError:
+                print("Incorrect date format. Use YYYY-MM-DD.")
+
+    def view_subjects(self):
+        if not self.subjects:
+            print("No subjects added yet.")
+        else:
+            for subject, tasks in self.subjects.items():
+                print(f"\nSubject: {subject}")
+                if tasks:
+                    for idx, task in enumerate(tasks, 1):
+                        status = "Completed" if task["completed"] else "Pending"
+                        print(f"  {idx}. Task: {task['task']}, Due Date: {task['due_date'].strftime('%Y-%m-%d')}, Status: {status}")
+                else:
+                    print("  No tasks yet.")
+    
+    def mark_task_completed(self, subject_name, task_name):
+        if subject_name not in self.subjects:
+            print(f"Subject {subject_name} does not exist.")
+        else:
+            tasks = self.subjects[subject_name]
+            for task in tasks:
+                if task["task"] == task_name:
+                    task["completed"] = True
+                    print(f"Task '{task_name}' marked as completed.")
+                    return
+            print(f"Task '{task_name}' not found in subject '{subject_name}'.")
+
+    def view_upcoming_deadlines(self):
+        all_tasks = []
+        for subject, tasks in self.subjects.items():
+            for task in tasks:
+                if not task["completed"]:
+                    all_tasks.append((subject, task["task"], task["due_date"]))
+
+        if all_tasks:
+            all_tasks.sort(key=lambda x: x[2])  # Sort by due date
+            print("\nUpcoming Deadlines:")
+            for subject, task, due_date in all_tasks:
+                print(f"  Subject: {subject}, Task: {task}, Due Date: {due_date.strftime('%Y-%m-%d')}")
+        else:
+            print("No upcoming deadlines or all tasks completed!")
+
+    def edit_task(self, subject_name, old_task_name, new_task_name=None, new_due_date=None):
+        if subject_name not in self.subjects:
+            print(f"Subject {subject_name} does not exist.")
+        else:
+            tasks = self.subjects[subject_name]
+            for task in tasks:
+                if task["task"] == old_task_name:
+                    if new_task_name:
+                        task["task"] = new_task_name
+                    if new_due_date:
+                        try:
+                            task["due_date"] = datetime.strptime(new_due_date, "%Y-%m-%d")
+                        except ValueError:
+                            print("Incorrect date format. Use YYYY-MM-DD.")
+                    print(f"Task '{old_task_name}' updated.")
+                    return
+            print(f"Task '{old_task_name}' not found in subject '{subject_name}'.")
+
+    def export_to_csv(self, filename):
+        with open(filename, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Subject", "Task", "Due Date", "Status"])
+            for subject, tasks in self.subjects.items():
+                for task in tasks:
+                    status = "Completed" if task["completed"] else "Pending"
+                    writer.writerow([subject, task["task"], task["due_date"].strftime('%Y-%m-%d'), status])
+        print(f"Planner exported to {filename}")
+
+# Example of usage:
+planner = StudyPlanner()
+
+# Add subjects
+planner.add_subject("Math")
+planner.add_subject("History")
+
+# Add tasks to subjects
+planner.add_task("Math", "Calculus Homework", "2024-10-30")
+planner.add_task("History", "Read Chapter 3", "2024-10-25")
+
+# View all subjects and tasks
+planner.view_subjects()
+
+# Mark a task as completed
+planner.mark_task_completed("Math", "Calculus Homework")
+
+# View upcoming deadlines
+planner.view_upcoming_deadlines()
+
+# Edit a task
+planner.edit_task("History", "Read Chapter 3", new_due_date="2024-10-28")
+
+# Export the planner to CSV
+planner.export_to_csv("study_planner.csv")
